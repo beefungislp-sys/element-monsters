@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Element Monsters</title>
+<style>
+  :root{
+    --bg:#0f1226; --bg2:#171a36; --panel:#1e2347; --ink:#eef1ff; --muted:#9aa3d4;
+    --gold:#ffd24a; --good:#46e08a; --bad:#ff6b7a; --line:#2c3361; --blue:#7a9cff;
+    --c-nonmetal:#4fd18b; --c-halogen:#33c6c6; --c-noble:#b98bff;
+    --c-alkali:#ff7a59; --c-alkaline:#ffb24a; --c-transition:#ffd24a;
+    --c-metalloid:#a3c34a; --c-post:#7a9cff;
+    --t-monster:#ff6b7a; --t-shield:#7a9cff; --t-spell:#4fd18b; --t-star:#b98bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:"Segoe UI",system-ui,sans-serif; color:var(--ink);
+    background:radial-gradient(1200px 600px at 50% -10%,#222a5a,#0f1226); min-height:100vh; padding:18px;}
+  h1{margin:0; font-size:24px; letter-spacing:.5px}
+  h1 .spark{color:var(--gold)}
+  .sub{color:var(--muted); font-size:13px; margin-top:2px}
+  header{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px}
+  .topbtn{background:#39406f; color:var(--ink); border:none; border-radius:10px; padding:8px 12px; font:inherit; font-weight:700; cursor:pointer}
+  .hide{display:none !important}
+
+  /* HOME */
+  #home{max-width:760px; margin:6vh auto 0; text-align:center}
+  #home .logo{font-size:46px; font-weight:800; letter-spacing:1px}
+  #home .logo .spark{color:var(--gold)}
+  #home .tag{color:var(--muted); margin:6px 0 26px}
+  .menu{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  @media(max-width:680px){.menu{grid-template-columns:1fr}}
+  .mode{background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:26px 20px; cursor:pointer; transition:transform .1s, box-shadow .15s, border-color .15s}
+  .mode:hover{transform:translateY(-4px); box-shadow:0 12px 30px rgba(0,0,0,.5); border-color:var(--gold)}
+  .mode .ic{font-size:46px}
+  .mode .t{font-size:20px; font-weight:800; margin:8px 0 4px}
+  .mode .d{color:var(--muted); font-size:13px}
+
+  /* LAB tabla */
+  .layout{display:grid; grid-template-columns:1fr 340px; gap:16px; align-items:start}
+  @media(max-width:980px){.layout{grid-template-columns:1fr}}
+  .table-wrap{background:var(--bg2); border:1px solid var(--line); border-radius:16px; padding:12px; overflow:auto}
+  .ptable{display:grid; grid-template-columns:repeat(18,1fr); grid-auto-rows:1fr; gap:4px; min-width:640px}
+  .cell{position:relative; aspect-ratio:1/1; border-radius:9px; cursor:pointer; border:2px solid rgba(255,255,255,.12);
+    background:var(--cellbg); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:transform .08s, box-shadow .12s; user-select:none; padding:2px; overflow:hidden;}
+  .cell:hover{transform:translateY(-2px) scale(1.05); box-shadow:0 6px 16px rgba(0,0,0,.45); z-index:5}
+  .cell.sel{border-color:#fff; transform:translateY(-2px) scale(1.06); box-shadow:0 0 0 3px var(--gold); z-index:6}
+  .cell .num{position:absolute; top:2px; left:4px; font-size:8px; color:rgba(0,0,0,.55); font-weight:700}
+  .cell .sym{font-weight:800; font-size:15px; color:#10122a; margin-top:1px}
+  .cell .mon{width:82%; height:56%; background:rgba(8,10,26,.34); border-radius:8px}
+  .cell.seen::after{content:"✓"; position:absolute; top:1px; right:3px; font-size:9px; color:#10122a; font-weight:800; opacity:.6}
+  .legend{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; font-size:11px; color:var(--muted)}
+  .legend span{display:inline-flex; align-items:center; gap:4px}
+  .legend i{width:10px; height:10px; border-radius:3px; display:inline-block}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:16px; position:sticky; top:14px}
+  .empty-ficha{text-align:center; color:var(--muted); padding:30px 10px}
+  .empty-ficha .big{font-size:40px; margin-bottom:8px}
+  .ficha .top{display:flex; gap:12px; align-items:center}
+  .ficha .bigmon{width:78px; height:78px; border-radius:14px; background:#0e1430; border:2px solid var(--cellbg); flex:none; padding:6px}
+  .ficha .bigmon svg{width:100%; height:100%}
+  .ficha .name{font-size:20px; font-weight:800}
+  .ficha .zsym{color:var(--muted); font-size:13px; margin-top:2px}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0}
+  .chip-tag{font-size:11px; font-weight:700; border-radius:20px; padding:3px 10px; background:#11142e; border:1px solid var(--line)}
+  .fact{background:#11142e; border:1px solid var(--line); border-radius:12px; padding:10px 12px; font-size:14px; margin:6px 0 12px}
+  .combo-title{font-size:13px; color:var(--muted); margin-bottom:8px; font-weight:700}
+  .partners{display:flex; flex-wrap:wrap; gap:8px}
+  .pbtn{position:relative; width:60px; height:72px; border-radius:11px; background:var(--cellbg); border:2px solid rgba(0,0,0,.2); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:transform .08s}
+  .pbtn:hover{transform:translateY(-3px) scale(1.06)}
+  .pbtn .mon{width:64%; height:44%; background:rgba(8,10,26,.34); border-radius:8px}
+  .pbtn .sym{font-weight:800; color:#10122a; font-size:14px}
+  .pbtn .self{position:absolute; bottom:2px; font-size:8px; color:#10122a; font-weight:700}
+  .pbtn.done::after{content:"✓"; position:absolute; top:-6px; right:-6px; background:var(--good); color:#10122a; width:18px; height:18px; border-radius:50%; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center}
+  .star-msg{background:#11142e; border:1px dashed var(--c-noble); border-radius:12px; padding:12px; font-size:13px; color:#e7d9ff}
+  .score{display:flex; gap:10px; align-items:center; background:#11142e; border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:13px}
+  .score .pts{color:var(--gold); font-weight:800; font-size:18px}
+  .found{margin-top:14px; border-top:1px solid var(--line); padding-top:12px}
+  .found h3{margin:0 0 6px; font-size:13px; color:var(--muted)}
+  .found .list{display:flex; flex-wrap:wrap; gap:6px}
+  .tag{background:#11142e; border:1px solid var(--line); border-radius:20px; padding:3px 9px; font-size:11px}
+  .tag.atk{border-color:var(--bad); color:#ffb9c0}
+
+  /* ===== BATALLA ===== */
+  #battle .arena{display:flex; flex-direction:column; gap:10px}
+  .side{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:10px 12px}
+  .side.cpu{border-color:#52324a}
+  .side.me{border-color:#2f4a3a}
+  .sidehead{display:flex; align-items:center; gap:10px; margin-bottom:8px}
+  .sidehead .who{font-weight:800; font-size:14px; width:120px}
+  .lifebar{flex:1; height:18px; background:#11142e; border:1px solid var(--line); border-radius:10px; overflow:hidden}
+  .lifebar > i{display:block; height:100%; width:100%; transition:width .3s}
+  .cpu .lifebar > i{background:linear-gradient(90deg,#ff7a59,var(--bad))}
+  .me .lifebar > i{background:linear-gradient(90deg,var(--good),var(--gold))}
+  .lifenum{font-weight:800; width:64px; text-align:right}
+  .cpu .lifenum{color:#ff9a86} .me .lifenum{color:var(--good)}
+  .zones{display:flex; gap:14px; flex-wrap:wrap}
+  .zone{flex:1; min-width:160px}
+  .zlabel{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px}
+  .cardrow{display:flex; gap:6px; flex-wrap:wrap; min-height:54px}
+  .zempty{color:#4a5285; font-size:11px; font-style:italic}
+  .fcard{position:relative; width:50px; height:54px; border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; border:2px solid}
+  .fcard .cf{font-size:11px; line-height:1; text-align:center; color:#fff}
+  .fcard .catk{font-size:11px; margin-top:3px}
+  .fcard.monster{background:#3a1f28; border-color:var(--t-monster)} .fcard.monster .catk{color:var(--t-monster)}
+  .fcard.shield{background:#1f2a44; border-color:var(--t-shield)} .fcard.shield .catk{color:var(--blue)}
+  .fcard .sick{position:absolute; top:-7px; right:-5px; font-size:12px}
+  .fcard{animation:dropIn .3s cubic-bezier(.2,1.4,.5,1)}
+  @keyframes dropIn{0%{transform:scale(.5) translateY(-12px); opacity:0}100%{transform:scale(1) translateY(0); opacity:1}}
+  .side{transition:box-shadow .15s}
+  .side.hit{animation:shake .42s}
+  .side.hit .lifenum{animation:flashred .42s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  @keyframes flashred{0%,100%{color:inherit; transform:scale(1)}40%{color:#ff5566; transform:scale(1.35)}}
+  .hcard{animation:dealIn .25s ease}
+  @keyframes dealIn{from{transform:translateY(14px); opacity:0}to{transform:translateY(0); opacity:1}}
+
+  .midbar{display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; min-height:70px}
+  .turntag{font-weight:800; color:var(--gold); font-size:15px; width:120px}
+  #bLog{font-size:15px; line-height:1.35; color:var(--ink); flex:1; text-align:center}
+  #bLog div{margin:1px 0}
+  .handzone{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:10px}
+  #bHint{min-height:18px; color:var(--muted); font-size:13px; text-align:center; margin-bottom:10px}
+  .hand{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+  .hcard{position:relative; width:66px; height:82px; border-radius:12px; background:var(--cellbg); border:2px solid rgba(0,0,0,.25); display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:transform .1s}
+  .hcard:hover{transform:translateY(-3px)}
+  .hcard .mon{width:68%; height:50%; background:rgba(8,10,26,.34); border-radius:8px}
+  .hcard .sym{font-weight:800; color:#10122a; font-size:15px}
+  .hcard.sel{box-shadow:0 0 0 3px var(--gold); transform:translateY(-4px)}
+  .hcard.match{box-shadow:0 0 0 3px var(--good); animation:glow 1s infinite alternate}
+  @keyframes glow{from{box-shadow:0 0 0 3px var(--good)}to{box-shadow:0 0 0 6px rgba(70,224,138,.4)}}
+  .hcard.dim{opacity:.4}
+  .hcard .star{position:absolute; top:-8px; right:-6px; font-size:16px}
+  .handctrl{display:flex; gap:10px; justify-content:center; margin-top:14px}
+  .handctrl button{font:inherit; font-weight:700; border:none; border-radius:10px; padding:10px 16px; cursor:pointer}
+  .b-end{background:var(--gold); color:#10122a}
+  .b-end:disabled{opacity:.4; cursor:default}
+  .b-swap{background:#39406f; color:var(--ink)}
+
+  #toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(40px); opacity:0; background:#222a5a; border:1px solid var(--line); border-radius:12px; padding:10px 16px; font-weight:700; box-shadow:0 10px 30px rgba(0,0,0,.5); transition:transform .25s, opacity .25s; z-index:40; text-align:center}
+  #toast.show{transform:translateX(-50%) translateY(0); opacity:1}
+  #toast .f{color:var(--gold)}
+
+  .modal{position:fixed; inset:0; background:rgba(6,8,20,.72); display:none; align-items:center; justify-content:center; z-index:50}
+  .modal.show{display:flex; animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .card{background:linear-gradient(180deg,#222a5a,#171a36); border:1px solid var(--line); border-radius:18px; padding:22px; width:330px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.6); animation:pop .25s}
+  @keyframes pop{from{transform:scale(.8); opacity:0}to{transform:scale(1); opacity:1}}
+  .card .combomons{display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:6px}
+  .card .combomons .m{width:52px; height:52px}
+  .card .combomons .plus{font-size:22px; color:var(--muted)}
+  .card .big{font-size:26px; font-weight:800; color:var(--gold)}
+  .card .formula{font-size:22px; margin:4px 0}
+  .card .formula sub{font-size:14px}
+  .card .fact2{color:var(--muted); font-size:13px; margin:10px 0}
+  .card .pill{display:inline-block; background:var(--bad); color:#fff; font-size:11px; font-weight:700; border-radius:20px; padding:3px 10px; margin-bottom:8px}
+  .card button{background:var(--good); margin-top:8px; width:100%; font:inherit; font-weight:700; border:none; border-radius:10px; padding:11px; cursor:pointer; color:#10122a}
+  .card .b2{background:#39406f; color:var(--ink); margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home">
+  <div class="logo">⚗️ Element <span class="spark">Monsters</span></div>
+  <div class="tag">Conoce a los monstruos de la tabla periódica y combínalos.</div>
+  <div class="menu">
+    <div class="mode" onclick="openLab()"><div class="ic">🔬</div><div class="t">Laboratorio</div><div class="d">Explora los 36 monstruos, aprende qué son y combínalos sin prisa.</div></div>
+    <div class="mode" onclick="openBattle()"><div class="ic">⚔️</div><div class="t">Batalla vs Compu</div><div class="d">Por turnos. Forma monstruos, escudos y hechizos. ¡Deja al rival en 0 de vida!</div></div>
+  </div>
+</div>
+
+<!-- LABORATORIO -->
+<div id="lab" class="hide">
+  <header>
+    <div><h1>🔬 Laboratorio</h1><div class="sub">Toca un monstruo para conocerlo. Luego júntalo con sus amigos.</div></div>
+    <div style="display:flex; gap:8px; align-items:center">
+      <div class="score">🏆 <span class="pts" id="labPts">0</span></div>
+      <button class="topbtn" onclick="goHome()">↩️ Menú</button>
+    </div>
+  </header>
+  <div class="layout">
+    <div class="table-wrap"><div class="ptable" id="ptable"></div><div class="legend" id="legend"></div></div>
+    <div class="panel">
+      <div class="empty-ficha" id="ficha"><div class="big">👆🐉</div><div>Toca cualquier monstruo de la tabla<br>para conocerlo.</div></div>
+      <div class="found"><h3>Compuestos descubiertos (<span id="fcount">0</span>/<span id="ftotal">0</span>)</h3>
+        <div class="list" id="foundlist"><span style="color:var(--muted);font-size:12px">Aún ninguno...</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BATALLA -->
+<div id="battle" class="hide">
+  <header>
+    <div><h1>⚔️ Batalla</h1><div class="sub">Forma 1 carta por turno. Monstruo 🐉 pega, Escudo 🛡️ bloquea, Hechizo ✨ hace efecto.</div></div>
+    <button class="topbtn" onclick="quitBattle()">↩️ Menú</button>
+  </header>
+  <div class="arena">
+    <div class="side cpu" id="sideCpu">
+      <div class="sidehead"><div class="who">🤖 Compu</div><div class="lifebar"><i id="cpuLifeBar"></i></div><div class="lifenum"><span id="cpuLife">30</span>/30</div></div>
+      <div class="zones">
+        <div class="zone"><div class="zlabel">🐉 Sus monstruos</div><div class="cardrow" id="cpuMonsters"></div></div>
+        <div class="zone"><div class="zlabel">🛡️ Sus escudos</div><div class="cardrow" id="cpuShields"></div></div>
+      </div>
+    </div>
+    <div class="midbar"><div class="turntag" id="turnTag">Tu turno</div><div id="bLog">¡Empieza la batalla!</div><div style="width:60px"></div></div>
+    <div class="side me" id="sideMe">
+      <div class="sidehead"><div class="who">🧑 Tú</div><div class="lifebar"><i id="myLifeBar"></i></div><div class="lifenum"><span id="myLife">30</span>/30</div></div>
+      <div class="zones">
+        <div class="zone"><div class="zlabel">🐉 Tus monstruos (máx 3)</div><div class="cardrow" id="myMonsters"></div></div>
+        <div class="zone"><div class="zlabel">🛡️ Tus escudos</div><div class="cardrow" id="myShields"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="handzone">
+    <div id="bHint">Toca una carta y luego un amigo que brille en verde para formar tu carta.</div>
+    <div class="hand" id="bHand"></div>
+    <div class="handctrl">
+      <button class="b-end" id="bEndTurn" onclick="bEndTurn()">⚔️ Atacar y terminar turno</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="modal" id="modal"><div class="card" id="card"></div></div>
+
+<script>
+/* ===== 36 ELEMENTOS ===== */
+const ELEMENTS=[
+  {z:1,sym:"H",name:"Hidrógeno",cat:"nonmetal",state:"gas",col:1,row:1,fact:"El más ligero del universo. Llena globos y forma el agua. 💧"},
+  {z:2,sym:"He",name:"Helio",cat:"noble",state:"gas",col:18,row:1,fact:"Hace flotar globos y te pone voz chistosa. 🎈"},
+  {z:3,sym:"Li",name:"Litio",cat:"alkali",state:"solid",col:1,row:2,fact:"¡Está en la batería de tu celular! 🔋"},
+  {z:4,sym:"Be",name:"Berilio",cat:"alkaline",state:"solid",col:2,row:2,fact:"Metal ligero y fuerte, va en naves espaciales. 🚀"},
+  {z:5,sym:"B",name:"Boro",cat:"metalloid",state:"solid",col:13,row:2,fact:"Ayuda a que las plantas crezcan sanas. 🌱"},
+  {z:6,sym:"C",name:"Carbono",cat:"nonmetal",state:"solid",col:14,row:2,fact:"¡Forma el diamante Y también el lápiz! ✏️💎"},
+  {z:7,sym:"N",name:"Nitrógeno",cat:"nonmetal",state:"gas",col:15,row:2,fact:"Es casi todo el aire que respiras. 🌬️"},
+  {z:8,sym:"O",name:"Oxígeno",cat:"nonmetal",state:"gas",col:16,row:2,fact:"Lo necesitas para respirar y vivir. 🫁"},
+  {z:9,sym:"F",name:"Flúor",cat:"halogen",state:"gas",col:17,row:2,fact:"Cuida tus dientes en la pasta dental. 🦷"},
+  {z:10,sym:"Ne",name:"Neón",cat:"noble",state:"gas",col:18,row:2,fact:"Hace brillar los letreros de colores. 🌈"},
+  {z:11,sym:"Na",name:"Sodio",cat:"alkali",state:"solid",col:1,row:3,fact:"Con cloro forma la sal de tu comida. 🧂"},
+  {z:12,sym:"Mg",name:"Magnesio",cat:"alkaline",state:"solid",col:2,row:3,fact:"Arde con una llama súper blanca y brillante. ✨"},
+  {z:13,sym:"Al",name:"Aluminio",cat:"post",state:"solid",col:13,row:3,fact:"El metal del papel aluminio y las latas. 🥫"},
+  {z:14,sym:"Si",name:"Silicio",cat:"metalloid",state:"solid",col:14,row:3,fact:"Está en la arena y en los chips de compu. 💻"},
+  {z:15,sym:"P",name:"Fósforo",cat:"nonmetal",state:"solid",col:15,row:3,fact:"Brilla y enciende los cerillos. 🔥"},
+  {z:16,sym:"S",name:"Azufre",cat:"nonmetal",state:"solid",col:16,row:3,fact:"Amarillo y huele feo, como huevo podrido. 🥚"},
+  {z:17,sym:"Cl",name:"Cloro",cat:"halogen",state:"gas",col:17,row:3,fact:"Limpia el agua de las albercas. 🏊"},
+  {z:18,sym:"Ar",name:"Argón",cat:"noble",state:"gas",col:18,row:3,fact:"Gas tranquilo que llena los focos. 💡"},
+  {z:19,sym:"K",name:"Potasio",cat:"alkali",state:"solid",col:1,row:4,fact:"¡Está en los plátanos y te da energía! 🍌"},
+  {z:20,sym:"Ca",name:"Calcio",cat:"alkaline",state:"solid",col:2,row:4,fact:"Hace fuertes tus huesos y dientes. 🦴"},
+  {z:21,sym:"Sc",name:"Escandio",cat:"transition",state:"solid",col:3,row:4,fact:"Metal raro y ligero para bicis y aviones. 🚲"},
+  {z:22,sym:"Ti",name:"Titanio",cat:"transition",state:"solid",col:4,row:4,fact:"Súper fuerte y ligero. ¡Hasta huesos de metal! 🦾"},
+  {z:23,sym:"V",name:"Vanadio",cat:"transition",state:"solid",col:5,row:4,fact:"Hace el acero más fuerte. 🛠️"},
+  {z:24,sym:"Cr",name:"Cromo",cat:"transition",state:"solid",col:6,row:4,fact:"Da el brillo de espejo a los metales. 🪞"},
+  {z:25,sym:"Mn",name:"Manganeso",cat:"transition",state:"solid",col:7,row:4,fact:"Ayuda a hacer acero bien duro."},
+  {z:26,sym:"Fe",name:"Hierro",cat:"transition",state:"solid",col:8,row:4,fact:"Hace el acero... y se oxida color naranja. 🟠"},
+  {z:27,sym:"Co",name:"Cobalto",cat:"transition",state:"solid",col:9,row:4,fact:"Pinta de azul los vidrios y la cerámica. 🔵"},
+  {z:28,sym:"Ni",name:"Níquel",cat:"transition",state:"solid",col:10,row:4,fact:"Está dentro de muchas monedas. 🪙"},
+  {z:29,sym:"Cu",name:"Cobre",cat:"transition",state:"solid",col:11,row:4,fact:"Lleva la electricidad por los cables. ⚡"},
+  {z:30,sym:"Zn",name:"Zinc",cat:"transition",state:"solid",col:12,row:4,fact:"Protege al hierro para que no se oxide. 🛡️"},
+  {z:31,sym:"Ga",name:"Galio",cat:"post",state:"solid",col:13,row:4,fact:"¡Un metal que se derrite en tu mano! 🤲"},
+  {z:32,sym:"Ge",name:"Germanio",cat:"metalloid",state:"solid",col:14,row:4,fact:"Se usa en lentes y electrónica. 🔬"},
+  {z:33,sym:"As",name:"Arsénico",cat:"metalloid",state:"solid",col:15,row:4,fact:"¡Cuidado! Es venenoso. ☠️"},
+  {z:34,sym:"Se",name:"Selenio",cat:"nonmetal",state:"solid",col:16,row:4,fact:"Un poquito ayuda a tu cuerpo a estar sano."},
+  {z:35,sym:"Br",name:"Bromo",cat:"halogen",state:"liquid",col:17,row:4,fact:"Líquido rojizo que huele muy fuerte."},
+  {z:36,sym:"Kr",name:"Kriptón",cat:"noble",state:"gas",col:18,row:4,fact:"Gas raro... ¡pero no es del planeta de Superman! 😄"},
+];
+const BY_SYM=Object.fromEntries(ELEMENTS.map(e=>[e.sym,e]));
+const CAT_COLOR={nonmetal:"--c-nonmetal",halogen:"--c-halogen",noble:"--c-noble",alkali:"--c-alkali",alkaline:"--c-alkaline",transition:"--c-transition",metalloid:"--c-metalloid",post:"--c-post"};
+const CAT_NAME={nonmetal:"No metal",halogen:"Halógeno",noble:"Gas noble",alkali:"Metal alcalino",alkaline:"Alcalinotérreo",transition:"Metal de transición",metalloid:"Metaloide",post:"Otro metal"};
+const STATE_NAME={gas:"Gas 💨",solid:"Sólido 🧊",liquid:"Líquido 💧"};
+
+/* ===== COMPUESTOS ===== */
+const COMPOUNDS=[
+  {name:"Agua",formula:"H₂O",need:{H:2,O:1},fact:"La bebes todos los días 💧"},
+  {name:"Sal de mesa",formula:"NaCl",need:{Na:1,Cl:1},fact:"La sal de la comida 🧂"},
+  {name:"Gas hidrógeno",formula:"H₂",need:{H:2},fact:"El gas más ligero"},
+  {name:"Gas oxígeno",formula:"O₂",need:{O:2},fact:"El que respiras 🫁"},
+  {name:"Óxido de magnesio",formula:"MgO",need:{Mg:1,O:1},fact:"Polvo blanco brillante"},
+  {name:"Cal",formula:"CaO",need:{Ca:1,O:1},fact:"Para construir casas 🏠"},
+  {name:"Fluoruro de sodio",formula:"NaF",need:{Na:1,F:1},fact:"¡En tu pasta de dientes! 🦷"},
+  {name:"Cloruro de potasio",formula:"KCl",need:{K:1,Cl:1},fact:"Sal sin sodio"},
+  {name:"Ácido clorhídrico",formula:"HCl",need:{H:1,Cl:1},fact:"El ácido del estómago 🔥"},
+  {name:"Dióxido de carbono",formula:"CO₂",need:{C:1,O:2},fact:"El gas que exhalas 😮‍💨"},
+  {name:"Metano",formula:"CH₄",need:{C:1,H:4},fact:"El gas de las vacas 🐄"},
+  {name:"Amoníaco",formula:"NH₃",need:{N:1,H:3},fact:"Sirve para limpiar 🧽"},
+  {name:"Cloruro de calcio",formula:"CaCl₂",need:{Ca:1,Cl:2},fact:"Derrite el hielo ❄️"},
+  {name:"Óxido de zinc",formula:"ZnO",need:{Zn:1,O:1},fact:"El bloqueador solar ☀️"},
+  {name:"Sulfuro de hidrógeno",formula:"H₂S",need:{H:2,S:1},fact:"Huele a huevo podrido 🥚"},
+  {name:"Ácido fluorhídrico",formula:"HF",need:{H:1,F:1},fact:"¡Disuelve hasta el vidrio!"},
+  {name:"Dióxido de silicio",formula:"SiO₂",need:{Si:1,O:2},fact:"La arena y el vidrio 🏖️"},
+  {name:"Óxido de hierro",formula:"Fe₂O₃",need:{Fe:2,O:3},fact:"¡La herrumbre naranja! 🟠"},
+  {name:"Óxido de aluminio",formula:"Al₂O₃",need:{Al:2,O:3},fact:"Protege al aluminio"},
+  {name:"Cloruro de aluminio",formula:"AlCl₃",need:{Al:1,Cl:3},fact:"Polvo blanco"},
+  {name:"Tetracloruro de carbono",formula:"CCl₄",need:{C:1,Cl:4},fact:"4 cloros en un carbono"},
+  {name:"Dióxido de titanio",formula:"TiO₂",need:{Ti:1,O:2},fact:"La pintura blanca 🎨"},
+  {name:"Trifluoruro de boro",formula:"BF₃",need:{B:1,F:3},fact:"Gas muy reactivo"},
+  {name:"Arsina",formula:"AsH₃",need:{As:1,H:3},fact:"¡Gas muy venenoso! ☠️"},
+  {name:"Nitruro de aluminio",formula:"AlN",need:{Al:1,N:1},fact:"Material súper duro"},
+  {name:"Nitruro de magnesio",formula:"Mg₃N₂",need:{Mg:3,N:2},fact:"¡El más difícil! 🏆"},
+  {name:"Cloruro de litio",formula:"LiCl",need:{Li:1,Cl:1},fact:"Sal de litio"},
+  {name:"Óxido de litio",formula:"Li₂O",need:{Li:2,O:1},fact:"Polvo blanco de litio"},
+  {name:"Óxido de berilio",formula:"BeO",need:{Be:1,O:1},fact:"Muy duro y aislante"},
+  {name:"Fosfina",formula:"PH₃",need:{P:1,H:3},fact:"Gas que huele a ajo 🧄"},
+  {name:"Óxido de escandio",formula:"Sc₂O₃",need:{Sc:2,O:3},fact:"Óxido de un metal raro"},
+  {name:"Óxido de vanadio",formula:"V₂O₅",need:{V:2,O:5},fact:"Naranja, ayuda en química"},
+  {name:"Óxido de cromo",formula:"Cr₂O₃",need:{Cr:2,O:3},fact:"Verde, en pinturas 🟢"},
+  {name:"Óxido de manganeso",formula:"MnO",need:{Mn:1,O:1},fact:"Verde-gris"},
+  {name:"Óxido de cobalto",formula:"CoO",need:{Co:1,O:1},fact:"Da el azul cobalto 🔵"},
+  {name:"Óxido de níquel",formula:"NiO",need:{Ni:1,O:1},fact:"Verde, para baterías"},
+  {name:"Óxido de cobre",formula:"CuO",need:{Cu:1,O:1},fact:"Negro; el cobre oxidado"},
+  {name:"Óxido de galio",formula:"Ga₂O₃",need:{Ga:2,O:3},fact:"Para electrónica"},
+  {name:"Dióxido de germanio",formula:"GeO₂",need:{Ge:1,O:2},fact:"Para lentes y fibra óptica"},
+  {name:"Seleniuro de hidrógeno",formula:"H₂Se",need:{H:2,Se:1},fact:"Huele peor que el azufre 🤢"},
+  {name:"Bromuro de sodio",formula:"NaBr",need:{Na:1,Br:1},fact:"Sal de bromo"},
+  {name:"Ácido bromhídrico",formula:"HBr",need:{H:1,Br:1},fact:"Otro ácido fuerte"},
+];
+const BY_FORMULA=Object.fromEntries(COMPOUNDS.map(c=>[c.formula,c]));
+
+/* ===== EFECTOS DE CARTA (batalla) ===== */
+const CARD={
+  "Mg₃N₂":{type:"monster",atk:8}, "Fe₂O₃":{type:"monster",atk:6}, "TiO₂":{type:"monster",atk:5},
+  "V₂O₅":{type:"monster",atk:5}, "CuO":{type:"monster",atk:4}, "AlCl₃":{type:"monster",atk:4},
+  "Cr₂O₃":{type:"monster",atk:4}, "Ga₂O₃":{type:"monster",atk:4}, "GeO₂":{type:"monster",atk:4},
+  "Sc₂O₃":{type:"monster",atk:4}, "CCl₄":{type:"monster",atk:4}, "Li₂O":{type:"monster",atk:3},
+  "MgO":{type:"monster",atk:3}, "CaO":{type:"monster",atk:3}, "MnO":{type:"monster",atk:3},
+  "CoO":{type:"monster",atk:3}, "NiO":{type:"monster",atk:3}, "NaCl":{type:"monster",atk:2},
+  "KCl":{type:"monster",atk:2}, "NaBr":{type:"monster",atk:2}, "LiCl":{type:"monster",atk:2},
+  "Al₂O₃":{type:"shield",block:5}, "AlN":{type:"shield",block:5}, "SiO₂":{type:"shield",block:4},
+  "BeO":{type:"shield",block:4}, "ZnO":{type:"shield",block:3}, "NaF":{type:"shield",block:2,heal:2},
+  "AsH₃":{type:"spell",dmg:6}, "HF":{type:"spell",dmg:5,ignore:true}, "HCl":{type:"spell",dmg:4},
+  "HBr":{type:"spell",dmg:4}, "PH₃":{type:"spell",dmg:4}, "H₂Se":{type:"spell",dmg:4},
+  "BF₃":{type:"spell",dmg:4}, "H₂S":{type:"spell",dmg:3}, "H₂":{type:"spell",dmg:3},
+  "CH₄":{type:"spell",dmg:3}, "H₂O":{type:"spell",heal:4}, "O₂":{type:"spell",draw:2},
+  "CaCl₂":{type:"spell",melt:true}, "NH₃":{type:"spell",destroy:true}, "CO₂":{type:"spell",silence:true},
+};
+const NOBLE={
+  "Ar":{type:"shield",block:999,oneUse:true,name:"Argón"},
+  "Kr":{type:"shield",block:5,name:"Kriptón"},
+  "He":{type:"spell",dodge:true,name:"Helio"},
+  "Ne":{type:"spell",draw:2,name:"Neón"},
+};
+function cardOf(f){return Object.assign({},CARD[f],{formula:f,name:BY_FORMULA[f].name,fact:BY_FORMULA[f].fact});}
+function nobleOf(s){return Object.assign({},NOBLE[s],{sym:s});}
+
+/* ===== amigos ===== */
+const PARTNERS={}; ELEMENTS.forEach(e=>PARTNERS[e.sym]=new Set());
+COMPOUNDS.forEach(cp=>{const t=Object.keys(cp.need); if(t.length===1)PARTNERS[t[0]].add(t[0]); else{PARTNERS[t[0]].add(t[1]);PARTNERS[t[1]].add(t[0]);}});
+function findCompound(a,b){return COMPOUNDS.find(cp=>{const t=Object.keys(cp.need); if(a===b)return t.length===1&&t[0]===a; return t.length===2&&t.includes(a)&&t.includes(b);});}
+
+/* ===== mazo con pesos (más reacciones = más copias) ===== */
+/* pesos: los "conectores" (O,H,Cl,F,N) salen mucho para que casi siempre puedas
+   formar algo; los metales raros salen poco. Nobles 2 (siempre se usan solos). */
+const WEIGHTS={O:16,H:11,Cl:8,N:4,F:4,C:4,Na:4,Al:3,Ca:3,Mg:3,S:3,
+  Li:2,K:2,Br:2,Fe:2,Zn:2,Cu:2,Ti:2,Si:2, He:2,Ne:2,Ar:2,Kr:2};
+const DECK=[]; ELEMENTS.forEach(e=>{const w=WEIGHTS[e.sym]||1; for(let i=0;i<w;i++)DECK.push(e.sym);});
+function draw(){return DECK[Math.floor(Math.random()*DECK.length)];}
+function drawN(n){return Array.from({length:n},draw);}
+
+/* ===== monstruo SVG ===== */
+/* monstruos TEMÁTICOS por familia, más grandes e imponentes.
+   El COLOR sigue siendo de la familia (educa); la FORMA da el tema. */
+function monster(el){
+  const c=`var(${CAT_COLOR[el.cat]})`,dark="#10122a";
+  switch(el.cat){
+    /* GAS NOBLE = ONI DORMIDO (demonio con cuernos, durmiendo) */
+    case "noble":return `<svg viewBox="0 0 100 100">
+      <path d="M30 30 q-7 -17 -14 -19 q12 -1 19 13 z" fill="${c}"/>
+      <path d="M70 30 q7 -17 14 -19 q-12 -1 -19 13 z" fill="${c}"/>
+      <ellipse cx="50" cy="57" rx="29" ry="27" fill="${c}"/>
+      <path d="M30 53 q8 -6 16 0" stroke="${dark}" stroke-width="3.5" fill="none"/>
+      <path d="M54 53 q8 -6 16 0" stroke="${dark}" stroke-width="3.5" fill="none"/>
+      <path d="M40 67 q10 7 20 0" stroke="${dark}" stroke-width="3" fill="none"/>
+      <polygon points="42,67 45,74 48,67" fill="#fff"/><polygon points="52,67 55,74 58,67" fill="#fff"/>
+      <text x="74" y="24" font-size="13" font-weight="bold" fill="${dark}">z</text></svg>`;
+    /* HALÓGENO = INVADER (alien angular con antenas) */
+    case "halogen":return `<svg viewBox="0 0 100 100">
+      <line x1="38" y1="28" x2="31" y2="14" stroke="${c}" stroke-width="4"/><circle cx="31" cy="13" r="3.5" fill="${c}"/>
+      <line x1="62" y1="28" x2="69" y2="14" stroke="${c}" stroke-width="4"/><circle cx="69" cy="13" r="3.5" fill="${c}"/>
+      <path d="M26 34 h48 v22 l-8 8 v-8 h-8 v8 h-8 v-8 h-8 v8 h-8 v-8 l-8 8 z" fill="${c}" transform="translate(0,2)"/>
+      <rect x="35" y="42" width="10" height="10" rx="2" fill="${dark}"/><rect x="55" y="42" width="10" height="10" rx="2" fill="${dark}"/>
+      <rect x="37" y="44" width="3" height="3" fill="#fff"/><rect x="57" y="44" width="3" height="3" fill="#fff"/></svg>`;
+    /* METAL ALCALINO = DIABLILLO EXPLOSIVO (cuernitos + chispa, nervioso) */
+    case "alkali":return `<svg viewBox="0 0 100 100">
+      <path d="M50 13 l5 -9 l-8 4 l6 -8 l-11 11 l9 -3 z" fill="${dark}"/>
+      <polygon points="34,31 30,18 41,29" fill="${c}"/><polygon points="66,31 70,18 59,29" fill="${c}"/>
+      <circle cx="50" cy="57" r="27" fill="${c}"/>
+      <circle cx="40" cy="51" r="8.5" fill="#fff"/><circle cx="60" cy="51" r="8.5" fill="#fff"/>
+      <circle cx="41" cy="52" r="4" fill="${dark}"/><circle cx="61" cy="52" r="4" fill="${dark}"/>
+      <path d="M38 68 l4 5 l4 -5 l4 5 l4 -5 l4 5 l2 -5" stroke="${dark}" stroke-width="2.5" fill="none"/></svg>`;
+    /* METAL DE TRANSICIÓN = GOLEM ARMADO (robusto, ojos brillantes, dientes) */
+    case "transition":return `<svg viewBox="0 0 100 100">
+      <rect x="13" y="42" width="13" height="32" rx="4" fill="${c}" opacity=".8"/>
+      <rect x="74" y="42" width="13" height="32" rx="4" fill="${c}" opacity=".8"/>
+      <rect x="26" y="28" width="48" height="52" rx="8" fill="${c}"/>
+      <circle cx="32" cy="34" r="2.5" fill="${dark}"/><circle cx="68" cy="34" r="2.5" fill="${dark}"/>
+      <rect x="33" y="44" width="13" height="9" rx="2" fill="#fff"/><rect x="54" y="44" width="13" height="9" rx="2" fill="#fff"/>
+      <rect x="37" y="46" width="5" height="5" fill="${dark}"/><rect x="58" y="46" width="5" height="5" fill="${dark}"/>
+      <rect x="35" y="62" width="30" height="9" rx="2" fill="${dark}"/>
+      <rect x="40" y="62" width="3" height="5" fill="#fff"/><rect x="49" y="62" width="3" height="5" fill="#fff"/><rect x="58" y="62" width="3" height="5" fill="#fff"/></svg>`;
+    /* METALOIDE = CRISTAL DUAL (gema angular mitad clara/oscura) */
+    case "metalloid":return `<svg viewBox="0 0 100 100">
+      <polygon points="50,22 76,40 67,76 33,76 24,40" fill="${c}"/>
+      <polygon points="50,22 76,40 67,76 50,76" fill="${dark}" opacity=".18"/>
+      <circle cx="42" cy="50" r="5.5" fill="#fff"/><circle cx="58" cy="50" r="5.5" fill="#fff"/>
+      <circle cx="42" cy="51" r="2.6" fill="${dark}"/><circle cx="58" cy="51" r="2.6" fill="${dark}"/>
+      <path d="M42 64 q8 5 16 0" stroke="${dark}" stroke-width="3" fill="none"/></svg>`;
+    /* OTRO METAL = ROBOT SUAVE (con antena) */
+    case "post":return `<svg viewBox="0 0 100 100">
+      <line x1="50" y1="26" x2="50" y2="15" stroke="${c}" stroke-width="3"/><circle cx="50" cy="13" r="3.5" fill="${c}"/>
+      <rect x="25" y="32" width="50" height="48" rx="16" fill="${c}"/>
+      <rect x="33" y="46" width="34" height="15" rx="7" fill="${dark}" opacity=".22"/>
+      <circle cx="42" cy="53" r="5" fill="#fff"/><circle cx="58" cy="53" r="5" fill="#fff"/>
+      <circle cx="42" cy="53" r="2.4" fill="${dark}"/><circle cx="58" cy="53" r="2.4" fill="${dark}"/>
+      <rect x="44" y="70" width="12" height="3" rx="1.5" fill="${dark}" opacity=".4"/></svg>`;
+    /* ALCALINOTÉRREO = GUARDIÁN ROBUSTO (ceño duro) */
+    case "alkaline":return `<svg viewBox="0 0 100 100">
+      <ellipse cx="50" cy="57" rx="30" ry="28" fill="${c}"/>
+      <rect x="30" y="42" width="40" height="5" rx="2" fill="${dark}" opacity=".45"/>
+      <circle cx="40" cy="53" r="6.5" fill="#fff"/><circle cx="60" cy="53" r="6.5" fill="#fff"/>
+      <circle cx="40" cy="54" r="3.2" fill="${dark}"/><circle cx="60" cy="54" r="3.2" fill="${dark}"/>
+      <path d="M40 69 q10 5 20 0" stroke="${dark}" stroke-width="3" fill="none"/></svg>`;
+    /* NO METAL: gas = ESPÍRITU/FANTASMA, sólido = SLIME */
+    default:
+      if(el.state==="gas")return `<svg viewBox="0 0 100 100">
+        <path d="M27 66 q-6 -36 23 -36 q29 0 23 36 l-6 -5 l-5 6 l-5 -6 l-5 6 l-5 -6 l-5 6 l-5 -6 l-5 5 z" fill="${c}"/>
+        <circle cx="42" cy="50" r="6" fill="#fff"/><circle cx="58" cy="50" r="6" fill="#fff"/>
+        <circle cx="42" cy="51" r="2.8" fill="${dark}"/><circle cx="58" cy="51" r="2.8" fill="${dark}"/>
+        <path d="M44 61 q6 4 12 0" stroke="${dark}" stroke-width="2.5" fill="none"/></svg>`;
+      return `<svg viewBox="0 0 100 100">
+        <path d="M21 71 q0 -35 29 -35 q29 0 29 35 q-14 6 -29 6 q-15 0 -29 -6 z" fill="${c}"/>
+        <circle cx="40" cy="55" r="6.5" fill="#fff"/><circle cx="60" cy="55" r="6.5" fill="#fff"/>
+        <circle cx="41" cy="56" r="3.1" fill="${dark}"/><circle cx="61" cy="56" r="3.1" fill="${dark}"/>
+        <path d="M40 65 q10 6 20 0" stroke="${dark}" stroke-width="2.5" fill="none"/>
+        <circle cx="33" cy="50" r="3" fill="#fff" opacity=".4"/></svg>`;
+  }
+}
+function sub(f){return (f||"").replace(/([0-9₀-₉]+)/g,'<sub>$1</sub>');}
+
+/* ===== navegación ===== */
+function show(id){["home","lab","battle"].forEach(v=>document.getElementById(v).classList.toggle("hide",v!==id));}
+function goHome(){show("home");}
+function openLab(){show("lab"); if(!labBuilt)buildLab();}
+function openBattle(){ac(); show("battle"); startBattle();}
+function quitBattle(){show("home");}
+function closeModal(){document.getElementById("modal").classList.remove("show");}
+function toast(t,s){const el=document.getElementById("toast"); el.innerHTML=`${t}<br><span class="f">${s||""}</span>`; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),1800);}
+
+/* ===== SONIDO (Web Audio, sin archivos) ===== */
+let AC=null;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;} } if(AC.state==='suspended')AC.resume(); return AC; }
+function tone(freq,dur,type,vol,when){ const a=ac(); if(!a)return; const o=a.createOscillator(),g=a.createGain(); o.type=type||'sine'; o.frequency.value=freq; o.connect(g); g.connect(a.destination); const t=a.currentTime+(when||0); g.gain.setValueAtTime(vol||.2,t); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.start(t); o.stop(t+dur); }
+function noise(dur,vol){ const a=ac(); if(!a)return; const b=a.createBuffer(1,Math.floor(a.sampleRate*dur),a.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1; const s=a.createBufferSource(); s.buffer=b; const g=a.createGain(); g.gain.setValueAtTime(vol||.2,a.currentTime); g.gain.exponentialRampToValueAtTime(.001,a.currentTime+dur); s.connect(g); g.connect(a.destination); s.start(); }
+const SFX={
+  click:()=>tone(440,.06,'triangle',.12),
+  draw:()=>{tone(300,.07,'triangle',.1); tone(540,.08,'triangle',.1,.05); noise(.05,.05);},
+  monster:()=>{tone(150,.2,'sawtooth',.25); tone(110,.28,'square',.14,.03);},
+  shield:()=>{tone(520,.12,'sine',.2); tone(800,.16,'sine',.14,.06);},
+  spell:()=>{tone(680,.1,'square',.16); tone(1020,.12,'square',.1,.05);},
+  attack:()=>{tone(220,.12,'sawtooth',.22); noise(.12,.14);},
+  damage:()=>noise(.18,.2),
+  heal:()=>{[523,659,784].forEach((f,i)=>tone(f,.13,'sine',.18,i*.07));},
+  win:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,.22,'triangle',.22,i*.12));},
+  lose:()=>{[392,294,196].forEach((f,i)=>tone(f,.26,'sawtooth',.2,i*.14));},
+};
+function flashDamage(foe){ const el=document.getElementById(foe==='p'?'sideMe':'sideCpu'); if(!el)return; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); setTimeout(()=>el.classList.remove('hit'),440); }
+
+/* =================== LABORATORIO =================== */
+let labBuilt=false, labScore=0, found=new Set(), seen=new Set(), selSym=null;
+function buildLab(){
+  labBuilt=true;
+  const ptable=document.getElementById("ptable");
+  ELEMENTS.forEach(el=>{
+    const d=document.createElement("div"); d.className="cell"; d.id="cell-"+el.sym;
+    d.style.gridColumn=el.col; d.style.gridRow=el.row; d.style.setProperty("--cellbg",`var(${CAT_COLOR[el.cat]})`);
+    d.innerHTML=`<span class="num">${el.z}</span><div class="mon">${monster(el)}</div><span class="sym">${el.sym}</span>`;
+    d.title=el.name; d.onclick=()=>selectElement(el.sym); ptable.appendChild(d);
+  });
+  const legend=document.getElementById("legend");
+  Object.keys(CAT_NAME).forEach(k=>{const s=document.createElement("span"); s.innerHTML=`<i style="background:var(${CAT_COLOR[k]})"></i>${CAT_NAME[k]}`; legend.appendChild(s);});
+  document.getElementById("ftotal").textContent=COMPOUNDS.length;
+}
+function selectElement(sym){
+  selSym=sym; seen.add(sym);
+  document.querySelectorAll(".cell").forEach(c=>c.classList.remove("sel"));
+  const c=document.getElementById("cell-"+sym); c.classList.add("sel"); c.classList.add("seen"); renderFicha(sym);
+}
+function renderFicha(sym){
+  const el=BY_SYM[sym]; const partners=[...PARTNERS[sym]]; let comboHTML;
+  if(partners.length===0){
+    comboHTML=`<div class="star-msg">⭐ <b>${el.name}</b> es un <b>gas noble</b>: no se combina. En la batalla es una <b>carta estrella</b> con efecto especial.</div>`;
+  } else {
+    comboHTML=`<div class="combo-title">🤝 ¿Con quién se junta?</div><div class="partners">`+
+      partners.map(p=>{const pe=BY_SYM[p]; const cp=findCompound(sym,p); const done=cp&&found.has(cp.formula); const self=p===sym?`<span class="self">×2</span>`:"";
+        return `<div class="pbtn ${done?'done':''}" style="--cellbg:var(${CAT_COLOR[pe.cat]})" onclick="labCombine('${sym}','${p}')"><div class="mon">${monster(pe)}</div><span class="sym">${pe.sym}</span>${self}</div>`;}).join("")+`</div>`;
+  }
+  document.getElementById("ficha").outerHTML=`<div class="ficha" id="ficha"><div class="top"><div class="bigmon" style="--cellbg:var(${CAT_COLOR[el.cat]})">${monster(el)}</div><div><div class="name">${el.name}</div><div class="zsym">Símbolo <b style="color:var(--ink)">${el.sym}</b> · Número ${el.z}</div></div></div><div class="chips"><span class="chip-tag">${STATE_NAME[el.state]}</span><span class="chip-tag" style="border-color:var(${CAT_COLOR[el.cat]})">${CAT_NAME[el.cat]}</span></div><div class="fact">${el.fact}</div>${comboHTML}</div>`;
+}
+function labCombine(a,b){const cp=findCompound(a,b); if(!cp)return; if(!found.has(cp.formula)){found.add(cp.formula); labScore+=10; document.getElementById("labPts").textContent=labScore;} showLabWin(cp,a,b); updateFound(); if(selSym)renderFicha(selSym);}
+function showLabWin(cp,a,b){
+  const info=cardOf(cp.formula); const tipo=info.type==='monster'?`🐉 Monstruo · Ataque ${info.atk}`:info.type==='shield'?`🛡️ Escudo · Bloquea ${info.block}${info.heal?' +cura':''}`:`✨ Hechizo`;
+  document.getElementById("card").innerHTML=`<div class="combomons"><div class="m">${monster(BY_SYM[a])}</div><span class="plus">+</span><div class="m">${monster(BY_SYM[b])}</div></div><div class="big">¡Se combinaron!</div><div class="formula">${sub(cp.formula)}</div><div style="font-weight:700">${cp.name}</div><div class="fact2">${cp.fact}</div><div style="color:var(--gold);font-weight:800">${tipo}</div><button onclick="closeModal()">¡Genial! ➡️</button>`;
+  document.getElementById("modal").classList.add("show");
+}
+function updateFound(){document.getElementById("fcount").textContent=found.size; const list=document.getElementById("foundlist"); const items=COMPOUNDS.filter(c=>found.has(c.formula)); list.innerHTML=items.length?items.map(c=>{const t=CARD[c.formula]?CARD[c.formula].type:''; return `<span class="tag ${t==='spell'&&CARD[c.formula].dmg?'atk':''}">${c.formula}</span>`;}).join(""):'<span style="color:var(--muted);font-size:12px">Aún ninguno...</span>';}
+
+/* =================== BATALLA =================== */
+let pLife,cpuLife,hand,cHand,pMonsters,cpuMonsters,pShields,cpuShields,bSel,bPlayed,bTurn,bOver,pSkip,cpuSkip,pDodge,cpuDodge,bPendingInfo,bPendingIdxs;
+function cn(c){return c==='p'?'Tú':'La compu';}
+function cn2(f){return f==='p'?'ti':'la compu';}
+
+function startBattle(){
+  bLogLines=[];
+  pLife=30; cpuLife=30; hand=drawN(5); cHand=drawN(5);
+  pMonsters=[]; cpuMonsters=[]; pShields=[]; cpuShields=[];
+  bSel=null; bPlayed=false; bOver=false; pSkip=false; cpuSkip=false; pDodge=false; cpuDodge=false;
+  bLog("¡Empieza la batalla! Forma tu primera carta.");
+  bStartPlayerTurn();
+}
+let bLogLines=[];
+function bLog(m){ bLogLines.push(m); if(bLogLines.length>2)bLogLines.shift(); document.getElementById("bLog").innerHTML=bLogLines.map((l,i)=>`<div style="opacity:${i===bLogLines.length-1?1:.5}">${l}</div>`).join(''); }
+function playCardSfx(info){ if(info.heal!=null)SFX.heal(); else if(info.type==='monster')SFX.monster(); else if(info.type==='shield')SFX.shield(); else SFX.spell(); }
+function bHint(m){document.getElementById("bHint").textContent=m;}
+
+function bStartPlayerTurn(){
+  bTurn='p'; pMonsters.forEach(m=>m.canAttack=true); bDraw('p',2); bPlayed=false; bSel=null;
+  bHint("Tu turno: toca una carta y un amigo verde para formar tu carta. ⭐ = gas noble (úsalo solo).");
+  renderBattle();
+}
+function bDraw(who,n){const h=who==='p'?hand:cHand; for(let k=0;k<n;k++){ if(h.length>=7)h.shift(); h.push(draw()); } if(who==='p')SFX.draw();}
+
+function applyDamage(foe,dmg,ignore){
+  if((foe==='p'&&pDodge)||(foe==='c'&&cpuDodge)){ if(foe==='p')pDodge=false; else cpuDodge=false; checkWin(); return `${cn2(foe).replace('ti','Tú').replace('la compu','La compu')} esquivó el daño 🎈`; }
+  const shields=foe==='p'?pShields:cpuShields; let dleft=dmg;
+  if(!ignore){ while(dleft>0&&shields.length){const s=shields[0]; if(s.block>dleft){s.block-=dleft; dleft=0; if(s.oneUse)shields.shift();} else {dleft-=s.block; shields.shift();}} }
+  if(foe==='p')pLife=Math.max(0,pLife-dleft); else cpuLife=Math.max(0,cpuLife-dleft);
+  if(dleft>0){ flashDamage(foe); SFX.damage(); }
+  checkWin();
+  return `${dmg} de daño${ignore?' (ignora escudo)':''}${dleft<dmg?` (escudo absorbió ${dmg-dleft})`:''}.`;
+}
+function resolve(info,caster){
+  const me=caster, foe=caster==='p'?'c':'p';
+  const healMe=(v)=>{ if(me==='p')pLife=Math.min(30,pLife+v); else cpuLife=Math.min(30,cpuLife+v); };
+  if(info.type==='monster'){
+    const arr=me==='p'?pMonsters:cpuMonsters;
+    if(arr.length>=3){ bLog(`${cn(caster)}: zona de monstruos llena (máx 3).`); return false; }
+    arr.push({formula:info.formula,atk:info.atk,canAttack:false});
+    bLog(`${cn(caster)} invoca ${info.name} 🐉${info.atk}.`);
+  } else if(info.type==='shield'){
+    const arr=me==='p'?pShields:cpuShields;
+    arr.push({label:info.formula||info.name,block:info.block,oneUse:!!info.oneUse});
+    if(info.heal)healMe(info.heal);
+    bLog(`${cn(caster)} pone escudo ${info.name||info.formula} 🛡${info.block>=999?'∞':info.block}${info.heal?` (+cura ${info.heal})`:''}.`);
+  } else {
+    if(info.dmg!=null){ const t=applyDamage(foe,info.dmg,info.ignore); bLog(`${cn(caster)} lanza ${info.name}: ${t}`); }
+    else if(info.heal!=null){ healMe(info.heal); bLog(`${cn(caster)} usa ${info.name}: cura ${info.heal} 💚.`); }
+    else if(info.draw!=null){ bDraw(me,info.draw); if(info.reveal&&caster==='p')toast('Mano de la compu',cHand.join('  ')); bLog(`${cn(caster)} usa ${info.name}: roba ${info.draw}.`); }
+    else if(info.destroy){ const arr=me==='p'?cpuMonsters:pMonsters; if(arr.length){arr.sort((x,y)=>y.atk-x.atk); const d=arr.shift(); bLog(`${cn(caster)} usa ${info.name}: destruye ${d.formula} 🐉.`);} else bLog(`${cn(caster)} usa ${info.name}, pero no hay monstruo rival.`); }
+    else if(info.melt){ const arr=me==='p'?cpuShields:pShields; if(arr.length){const g=arr.shift(); bLog(`${cn(caster)} usa ${info.name}: derrite escudo ${g.label} ❄️.`);} else bLog(`${cn(caster)} usa ${info.name}, pero no hay escudo rival.`); }
+    else if(info.silence){ if(foe==='p')pSkip=true; else cpuSkip=true; bLog(`${cn(caster)} usa ${info.name}: los monstruos rivales no atacan el próximo turno 💤.`); }
+    else if(info.dodge){ if(me==='p')pDodge=true; else cpuDodge=true; bLog(`${cn(caster)} usa ${info.name}: esquivará el próximo ataque 🎈.`); }
+  }
+  return true;
+}
+function bAttack(caster){
+  if(bOver)return;
+  if((caster==='p'&&pSkip)||(caster==='c'&&cpuSkip)){ if(caster==='p')pSkip=false; else cpuSkip=false; bLog(`${cn(caster)}: monstruos atontados, no atacan 💤.`); return; }
+  const mons=caster==='p'?pMonsters:cpuMonsters; const foe=caster==='p'?'c':'p'; let total=0;
+  mons.forEach(m=>{ if(m.canAttack){ applyDamage(foe,m.atk,false); total+=m.atk; } });
+  if(total>0){ SFX.attack(); bLog(`${cn(caster)} ataca con sus monstruos (${total} de daño total).`); }
+}
+function checkWin(){ if(bOver)return; if(cpuLife<=0){bEnd(true);} else if(pLife<=0){bEnd(false);} }
+
+function bEndTurn(){ if(bOver||bTurn!=='p')return; bSel=null; bAttack('p'); renderBattle(); if(bOver)return; bCpuTurn(); }
+
+function bCpuTurn(){
+  bTurn='c'; bHint("Turno de la compu..."); renderBattle();
+  setTimeout(()=>{ if(bOver)return;
+    cpuMonsters.forEach(m=>m.canAttack=true); bDraw('c',2);
+    const opts=bOptions(cHand); let best=null,bv=-99; opts.forEach(o=>{const v=aiValue(o); if(v>bv){bv=v;best=o;}});
+    if(best&&bv>0){ const cinfo=best.cp?cardOf(best.cp.formula):nobleOf(cHand[best.i]); resolve(cinfo,'c'); if(best.cp){ const hi=Math.max(best.i,best.j),lo=Math.min(best.i,best.j); cHand.splice(hi,1); cHand.splice(lo,1);} else { cHand.splice(best.i,1);} playCardSfx(cinfo); }
+    else { cHand[0]=draw(); bLog("La compu cambia una carta."); }
+    renderBattle();
+    setTimeout(()=>{ if(bOver)return; bAttack('c'); renderBattle();
+      setTimeout(()=>{ if(bOver)return; bStartPlayerTurn(); },850);
+    },950);
+  },800);
+}
+function bOptions(h){const out=[]; for(let i=0;i<h.length;i++){ if(NOBLE[h[i]])out.push({i}); for(let j=i+1;j<h.length;j++){const cp=findCompound(h[i],h[j]); if(cp)out.push({cp,i,j});} } return out;}
+function aiValue(o){
+  const info=o.cp?cardOf(o.cp.formula):nobleOf(cHand[o.i]);
+  if(info.type==='monster')return info.atk+(cpuMonsters.length<3?1:-10);
+  if(info.type==='shield')return (cpuLife<20?(info.block>=999?7:info.block):2);
+  if(info.dmg!=null)return info.dmg+(info.ignore?2:0)+((pShields.length&&!info.ignore)?-1:1);
+  if(info.heal!=null)return cpuLife<15?info.heal+3:1;
+  if(info.draw!=null)return 2;
+  if(info.destroy)return pMonsters.length?6:0;
+  if(info.melt)return pShields.length?5:0;
+  if(info.silence)return pMonsters.some(m=>m.canAttack)?4:0;
+  if(info.dodge)return 2;
+  return 1;
+}
+
+/* hand del jugador */
+function bHandClick(i){
+  if(bOver||bTurn!=='p'||bPlayed)return;
+  SFX.click();
+  const sym=hand[i];
+  if(NOBLE[sym]){ askConfirm(nobleOf(sym),[i]); return; }
+  if(bSel===null){ bSel=i; renderBattle(); bSelHint(sym); return; }
+  if(i===bSel){ bSel=null; renderBattle(); bHint('Elige una carta.'); return; }
+  const cp=findCompound(hand[bSel],sym);
+  if(cp){ askConfirm(cardOf(cp.formula),[bSel,i]); }
+  else { bSel=i; renderBattle(); bSelHint(sym); }
+}
+function bSelHint(sym){
+  const can=hand.some((s,j)=>j!==bSel&&!!findCompound(sym,s));
+  if(NOBLE[sym]) bHint(`${BY_SYM[sym].name} es ⭐ gas noble: tócalo para ver su efecto.`);
+  else if(can) bHint(`Elegiste ${BY_SYM[sym].name}. Toca un amigo que brille en verde. 💚`);
+  else bHint(`Nadie en tu mano combina con ${BY_SYM[sym].name}. Elige otra carta o un gas noble ⭐.`);
+}
+/* describe el efecto en palabras simples */
+function effectText(info){
+  if(info.type==='monster')return `🐉 Monstruo: ataca ${info.atk} de daño al rival cada turno.`;
+  if(info.type==='shield')return `🛡️ Escudo: bloquea ${info.block>=999?'un ataque completo':info.block+' de daño'}.${info.heal?` Además te cura ${info.heal}.`:''}`;
+  if(info.dmg!=null)return `✨ Hechizo: hace ${info.dmg} de daño${info.ignore?' (ignora escudos)':''} al rival.`;
+  if(info.heal!=null)return `✨ Hechizo: te cura ${info.heal} de vida. 💚`;
+  if(info.draw!=null)return `✨ Hechizo: robas ${info.draw} carta${info.draw>1?'s':''}.${info.reveal?' Y espías la mano del rival.':''}`;
+  if(info.destroy)return `✨ Hechizo: destruye un monstruo del rival. 🧹`;
+  if(info.melt)return `✨ Hechizo: derrite un escudo del rival. ❄️`;
+  if(info.silence)return `✨ Hechizo: los monstruos del rival no atacan el próximo turno. 💤`;
+  if(info.dodge)return `⭐ Estrella: esquivas el próximo ataque que te hagan. 🎈`;
+  return '';
+}
+/* muestra info + confirmar antes de poner la carta */
+function askConfirm(info,idxs){
+  bPendingInfo=info; bPendingIdxs=idxs;
+  const arts=idxs.map(k=>`<div class="m">${monster(BY_SYM[hand[k]])}</div>`).join('<span class="plus">+</span>');
+  const isNoble=idxs.length===1&&NOBLE[hand[idxs[0]]];
+  const title=info.formula?sub(info.formula):`${BY_SYM[info.sym].name} (${info.sym})`;
+  const badge=info.type==='monster'?'🐉 MONSTRUO':info.type==='shield'?(isNoble?'⭐ ESCUDO (gas noble)':'🛡️ ESCUDO'):(isNoble?'⭐ ESTRELLA (gas noble)':'✨ HECHIZO');
+  document.getElementById("card").innerHTML=`
+    <div class="combomons">${arts}</div>
+    <div class="pill" style="background:#39406f">${badge}</div>
+    <div class="formula">${title}</div>
+    <div style="font-weight:700">${info.name||''}</div>
+    <div class="fact2">${effectText(info)}</div>
+    ${info.fact?`<div style="color:var(--muted);font-size:12px;margin-bottom:6px">${info.fact}</div>`:''}
+    <button onclick="doPlace()">✅ Poner en el tablero</button>
+    <button class="b2" onclick="cancelConfirm()">✖ Cancelar</button>`;
+  document.getElementById("modal").classList.add("show");
+}
+function doPlace(){
+  if(!bPendingInfo)return;
+  resolve(bPendingInfo,'p');
+  playCardSfx(bPendingInfo);
+  bPendingIdxs.slice().sort((a,b)=>b-a).forEach(k=>hand.splice(k,1));
+  bPlayed=true; bSel=null; bPendingInfo=null; bPendingIdxs=null;
+  closeModal(); renderBattle(); bHint('Carta puesta. Pulsa "⚔️ Atacar y terminar turno".');
+}
+function cancelConfirm(){
+  bPendingInfo=null; bPendingIdxs=null; bSel=null;
+  closeModal(); renderBattle(); bHint('Cancelado. Elige una carta.');
+}
+
+/* render batalla */
+function fieldCardM(m){return `<div class="fcard monster"><div class="cf">${sub(m.formula)}</div><div class="catk">🐉 ${m.atk}</div>${m.canAttack===false?'<div class="sick">💤</div>':''}</div>`;}
+function fieldCardS(s){return `<div class="fcard shield"><div class="cf">${sub(s.label)}</div><div class="catk">🛡 ${s.block>=999?'∞':s.block}</div></div>`;}
+function zEmpty(t){return `<span class="zempty">(sin ${t})</span>`;}
+function renderBattle(){
+  document.getElementById("cpuLife").textContent=cpuLife; document.getElementById("myLife").textContent=pLife;
+  document.getElementById("cpuLifeBar").style.width=(Math.max(0,cpuLife)/30*100)+"%";
+  document.getElementById("myLifeBar").style.width=(Math.max(0,pLife)/30*100)+"%";
+  document.getElementById("cpuMonsters").innerHTML=cpuMonsters.length?cpuMonsters.map(fieldCardM).join(""):zEmpty("monstruos");
+  document.getElementById("myMonsters").innerHTML=pMonsters.length?pMonsters.map(fieldCardM).join(""):zEmpty("monstruos");
+  document.getElementById("cpuShields").innerHTML=cpuShields.length?cpuShields.map(fieldCardS).join(""):zEmpty("escudos");
+  document.getElementById("myShields").innerHTML=pShields.length?pShields.map(fieldCardS).join(""):zEmpty("escudos");
+  document.getElementById("turnTag").textContent=bTurn==='p'?"Tu turno":"Turno de la compu";
+  document.getElementById("bEndTurn").disabled=(bTurn!=='p'||bOver);
+  renderBHand();
+}
+function renderBHand(){
+  document.getElementById("bHand").innerHTML=hand.map((sym,i)=>{
+    const el=BY_SYM[sym]; const noble=!!NOBLE[sym]; let cls="hcard";
+    if(bTurn==='p'&&!bPlayed){ if(i===bSel)cls+=" sel"; else if(bSel!=null)cls+= findCompound(hand[bSel],sym)?" match":" dim"; }
+    return `<div class="${cls}" style="--cellbg:var(${CAT_COLOR[el.cat]})" onclick="bHandClick(${i})">${noble?'<span class="star">⭐</span>':''}<div class="mon">${monster(el)}</div><span class="sym">${el.sym}</span></div>`;
+  }).join("");
+}
+function bEnd(playerWon){
+  bOver=true;
+  playerWon?SFX.win():SFX.lose();
+  document.getElementById("card").innerHTML=`<div class="big" style="color:${playerWon?'var(--good)':'var(--bad)'}">${playerWon?'🏆 ¡GANASTE!':'🤖 Ganó la compu'}</div><div class="fact2">${playerWon?'¡Dejaste al rival en 0! Gran químico. 🧪':'Te quedaste sin vida. ¡Inténtalo otra vez! 💪'}</div><div style="font-weight:800">Tú ${Math.max(0,pLife)} ❤️ — ${Math.max(0,cpuLife)} ❤️ Compu</div><button onclick="closeModal(); startBattle();">🔁 Jugar otra vez</button><button class="b2" onclick="closeModal(); quitBattle();">↩️ Menú</button>`;
+  document.getElementById("modal").classList.add("show");
+  renderBattle();
+}
+</script>
+</body>
+</html>
