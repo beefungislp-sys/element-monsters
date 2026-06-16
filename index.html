@@ -21,6 +21,9 @@
   .sub{color:var(--muted); font-size:13px; margin-top:2px}
   header{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px}
   .topbtn{background:#39406f; color:var(--ink); border:none; border-radius:10px; padding:8px 12px; font:inherit; font-weight:700; cursor:pointer}
+  .diffsel{display:flex; align-items:center; gap:4px; background:#11142e; border:1px solid var(--line); border-radius:10px; padding:4px 8px; font-size:12px; color:var(--muted)}
+  .diffsel button{background:transparent; color:var(--muted); border:none; border-radius:7px; padding:5px 9px; font:inherit; font-weight:700; cursor:pointer}
+  .diffsel button.on{background:var(--gold); color:#10122a}
   .hide{display:none !important}
 
   /* HOME */
@@ -82,7 +85,7 @@
 
   /* ===== BATALLA ===== */
   #battle .arena{display:flex; flex-direction:column; gap:10px}
-  .side{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:10px 12px}
+  .side{background:var(--bg2); border:1px solid var(--line); border-radius:14px; padding:10px 12px; position:relative}
   .side.cpu{border-color:#52324a}
   .side.me{border-color:#2f4a3a}
   .sidehead{display:flex; align-items:center; gap:10px; margin-bottom:8px}
@@ -96,14 +99,17 @@
   .zones{display:flex; gap:14px; flex-wrap:wrap}
   .zone{flex:1; min-width:160px}
   .zlabel{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px}
-  .cardrow{display:flex; gap:6px; flex-wrap:wrap; min-height:54px}
+  .cardrow{display:flex; gap:9px; flex-wrap:wrap; min-height:72px; padding:4px 2px 8px}
   .zempty{color:#4a5285; font-size:11px; font-style:italic}
-  .fcard{position:relative; width:50px; height:54px; border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:800; border:2px solid}
-  .fcard .cf{font-size:11px; line-height:1; text-align:center; color:#fff}
-  .fcard .catk{font-size:11px; margin-top:3px}
-  .fcard.monster{background:#3a1f28; border-color:var(--t-monster)} .fcard.monster .catk{color:var(--t-monster)}
-  .fcard.shield{background:#1f2a44; border-color:var(--t-shield)} .fcard.shield .catk{color:var(--blue)}
-  .fcard .sick{position:absolute; top:-7px; right:-5px; font-size:12px}
+  .fcard{position:relative; width:54px; height:62px; border-radius:9px; display:flex; flex-direction:column; align-items:center; border:2px solid; background:var(--cellbg); padding-top:3px; overflow:visible}
+  .fcard .fmon{width:84%; height:62%; background:rgba(8,10,26,.34); border-radius:7px}
+  .fcard .fcf{font-size:9px; line-height:1.1; color:#10122a; font-weight:800; margin-top:2px; text-align:center}
+  .fcard .fbadge{position:absolute; bottom:-7px; right:-6px; min-width:18px; height:16px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#fff; border-radius:8px; border:1.5px solid #fff; padding:0 3px}
+  .fcard .fbadge.atk{background:var(--t-monster)}
+  .fcard .fbadge.shield{background:var(--t-shield)}
+  .fcard.monster{border-color:var(--t-monster)}
+  .fcard.shield{border-color:var(--t-shield)}
+  .fcard .sick{position:absolute; top:-8px; left:-5px; font-size:13px}
   .fcard{animation:dropIn .3s cubic-bezier(.2,1.4,.5,1)}
   @keyframes dropIn{0%{transform:scale(.5) translateY(-12px); opacity:0}100%{transform:scale(1) translateY(0); opacity:1}}
   .side{transition:box-shadow .15s}
@@ -113,6 +119,12 @@
   @keyframes flashred{0%,100%{color:inherit; transform:scale(1)}40%{color:#ff5566; transform:scale(1.35)}}
   .hcard{animation:dealIn .25s ease}
   @keyframes dealIn{from{transform:translateY(14px); opacity:0}to{transform:translateY(0); opacity:1}}
+  .lungeUp{animation:lungeUp .32s ease}
+  @keyframes lungeUp{0%,100%{transform:translateY(0)}45%{transform:translateY(-14px)}}
+  .lungeDown{animation:lungeDown .32s ease}
+  @keyframes lungeDown{0%,100%{transform:translateY(0)}45%{transform:translateY(14px)}}
+  .floatdmg{position:absolute; top:8px; right:78px; font-size:24px; font-weight:800; color:#ff5566; text-shadow:0 2px 6px #000,0 0 2px #000; pointer-events:none; animation:floatup .9s ease-out forwards; z-index:20}
+  @keyframes floatup{0%{transform:translateY(0); opacity:0}15%{opacity:1}100%{transform:translateY(-36px); opacity:0}}
 
   .midbar{display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 16px; min-height:70px}
   .turntag{font-weight:800; color:var(--gold); font-size:15px; width:120px}
@@ -193,11 +205,19 @@
 <div id="battle" class="hide">
   <header>
     <div><h1>⚔️ Batalla</h1><div class="sub">Forma 1 carta por turno. Monstruo 🐉 pega, Escudo 🛡️ bloquea, Hechizo ✨ hace efecto.</div></div>
-    <button class="topbtn" onclick="quitBattle()">↩️ Menú</button>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <div class="diffsel" id="diffSel">
+        <span>Nivel:</span>
+        <button data-d="easy" onclick="setDifficulty('easy')">Fácil</button>
+        <button data-d="normal" onclick="setDifficulty('normal')">Normal</button>
+        <button data-d="hard" onclick="setDifficulty('hard')">Difícil</button>
+      </div>
+      <button class="topbtn" onclick="quitBattle()">↩️ Menú</button>
+    </div>
   </header>
   <div class="arena">
     <div class="side cpu" id="sideCpu">
-      <div class="sidehead"><div class="who">🤖 Compu</div><div class="lifebar"><i id="cpuLifeBar"></i></div><div class="lifenum"><span id="cpuLife">30</span>/30</div></div>
+      <div class="sidehead"><div class="who">🤖 Compu</div><div class="lifebar"><i id="cpuLifeBar"></i></div><div class="lifenum"><span id="cpuLife">30</span>/<span id="cpuMaxL">30</span></div></div>
       <div class="zones">
         <div class="zone"><div class="zlabel">🐉 Sus monstruos</div><div class="cardrow" id="cpuMonsters"></div></div>
         <div class="zone"><div class="zlabel">🛡️ Sus escudos</div><div class="cardrow" id="cpuShields"></div></div>
@@ -205,7 +225,7 @@
     </div>
     <div class="midbar"><div class="turntag" id="turnTag">Tu turno</div><div id="bLog">¡Empieza la batalla!</div><div style="width:60px"></div></div>
     <div class="side me" id="sideMe">
-      <div class="sidehead"><div class="who">🧑 Tú</div><div class="lifebar"><i id="myLifeBar"></i></div><div class="lifenum"><span id="myLife">30</span>/30</div></div>
+      <div class="sidehead"><div class="who">🧑 Tú</div><div class="lifebar"><i id="myLifeBar"></i></div><div class="lifenum"><span id="myLife">30</span>/<span id="myMaxL">30</span></div></div>
       <div class="zones">
         <div class="zone"><div class="zlabel">🐉 Tus monstruos (máx 3)</div><div class="cardrow" id="myMonsters"></div></div>
         <div class="zone"><div class="zlabel">🛡️ Tus escudos</div><div class="cardrow" id="myShields"></div></div>
@@ -228,7 +248,7 @@
 <script>
 /* ===== 36 ELEMENTOS ===== */
 const ELEMENTS=[
-  {z:1,sym:"H",name:"Hidrógeno",cat:"nonmetal",state:"gas",col:1,row:1,fact:"El más ligero del universo. Llena globos y forma el agua. 💧"},
+  {z:1,sym:"H",name:"Hidrógeno",cat:"nonmetal",state:"gas",col:1,row:1,fact:"El más ligero del universo. Es combustible y forma el agua. 💧"},
   {z:2,sym:"He",name:"Helio",cat:"noble",state:"gas",col:18,row:1,fact:"Hace flotar globos y te pone voz chistosa. 🎈"},
   {z:3,sym:"Li",name:"Litio",cat:"alkali",state:"solid",col:1,row:2,fact:"¡Está en la batería de tu celular! 🔋"},
   {z:4,sym:"Be",name:"Berilio",cat:"alkaline",state:"solid",col:2,row:2,fact:"Metal ligero y fuerte, va en naves espaciales. 🚀"},
@@ -272,48 +292,48 @@ const STATE_NAME={gas:"Gas 💨",solid:"Sólido 🧊",liquid:"Líquido 💧"};
 
 /* ===== COMPUESTOS ===== */
 const COMPOUNDS=[
-  {name:"Agua",formula:"H₂O",need:{H:2,O:1},fact:"La bebes todos los días 💧"},
-  {name:"Sal de mesa",formula:"NaCl",need:{Na:1,Cl:1},fact:"La sal de la comida 🧂"},
-  {name:"Gas hidrógeno",formula:"H₂",need:{H:2},fact:"El gas más ligero"},
-  {name:"Gas oxígeno",formula:"O₂",need:{O:2},fact:"El que respiras 🫁"},
-  {name:"Óxido de magnesio",formula:"MgO",need:{Mg:1,O:1},fact:"Polvo blanco brillante"},
-  {name:"Cal",formula:"CaO",need:{Ca:1,O:1},fact:"Para construir casas 🏠"},
-  {name:"Fluoruro de sodio",formula:"NaF",need:{Na:1,F:1},fact:"¡En tu pasta de dientes! 🦷"},
-  {name:"Cloruro de potasio",formula:"KCl",need:{K:1,Cl:1},fact:"Sal sin sodio"},
-  {name:"Ácido clorhídrico",formula:"HCl",need:{H:1,Cl:1},fact:"El ácido del estómago 🔥"},
-  {name:"Dióxido de carbono",formula:"CO₂",need:{C:1,O:2},fact:"El gas que exhalas 😮‍💨"},
-  {name:"Metano",formula:"CH₄",need:{C:1,H:4},fact:"El gas de las vacas 🐄"},
-  {name:"Amoníaco",formula:"NH₃",need:{N:1,H:3},fact:"Sirve para limpiar 🧽"},
-  {name:"Cloruro de calcio",formula:"CaCl₂",need:{Ca:1,Cl:2},fact:"Derrite el hielo ❄️"},
-  {name:"Óxido de zinc",formula:"ZnO",need:{Zn:1,O:1},fact:"El bloqueador solar ☀️"},
-  {name:"Sulfuro de hidrógeno",formula:"H₂S",need:{H:2,S:1},fact:"Huele a huevo podrido 🥚"},
-  {name:"Ácido fluorhídrico",formula:"HF",need:{H:1,F:1},fact:"¡Disuelve hasta el vidrio!"},
-  {name:"Dióxido de silicio",formula:"SiO₂",need:{Si:1,O:2},fact:"La arena y el vidrio 🏖️"},
-  {name:"Óxido de hierro",formula:"Fe₂O₃",need:{Fe:2,O:3},fact:"¡La herrumbre naranja! 🟠"},
-  {name:"Óxido de aluminio",formula:"Al₂O₃",need:{Al:2,O:3},fact:"Protege al aluminio"},
-  {name:"Cloruro de aluminio",formula:"AlCl₃",need:{Al:1,Cl:3},fact:"Polvo blanco"},
-  {name:"Tetracloruro de carbono",formula:"CCl₄",need:{C:1,Cl:4},fact:"4 cloros en un carbono"},
-  {name:"Dióxido de titanio",formula:"TiO₂",need:{Ti:1,O:2},fact:"La pintura blanca 🎨"},
-  {name:"Trifluoruro de boro",formula:"BF₃",need:{B:1,F:3},fact:"Gas muy reactivo"},
-  {name:"Arsina",formula:"AsH₃",need:{As:1,H:3},fact:"¡Gas muy venenoso! ☠️"},
-  {name:"Nitruro de aluminio",formula:"AlN",need:{Al:1,N:1},fact:"Material súper duro"},
-  {name:"Nitruro de magnesio",formula:"Mg₃N₂",need:{Mg:3,N:2},fact:"¡El más difícil! 🏆"},
-  {name:"Cloruro de litio",formula:"LiCl",need:{Li:1,Cl:1},fact:"Sal de litio"},
-  {name:"Óxido de litio",formula:"Li₂O",need:{Li:2,O:1},fact:"Polvo blanco de litio"},
-  {name:"Óxido de berilio",formula:"BeO",need:{Be:1,O:1},fact:"Muy duro y aislante"},
-  {name:"Fosfina",formula:"PH₃",need:{P:1,H:3},fact:"Gas que huele a ajo 🧄"},
-  {name:"Óxido de escandio",formula:"Sc₂O₃",need:{Sc:2,O:3},fact:"Óxido de un metal raro"},
-  {name:"Óxido de vanadio",formula:"V₂O₅",need:{V:2,O:5},fact:"Naranja, ayuda en química"},
-  {name:"Óxido de cromo",formula:"Cr₂O₃",need:{Cr:2,O:3},fact:"Verde, en pinturas 🟢"},
-  {name:"Óxido de manganeso",formula:"MnO",need:{Mn:1,O:1},fact:"Verde-gris"},
-  {name:"Óxido de cobalto",formula:"CoO",need:{Co:1,O:1},fact:"Da el azul cobalto 🔵"},
-  {name:"Óxido de níquel",formula:"NiO",need:{Ni:1,O:1},fact:"Verde, para baterías"},
-  {name:"Óxido de cobre",formula:"CuO",need:{Cu:1,O:1},fact:"Negro; el cobre oxidado"},
-  {name:"Óxido de galio",formula:"Ga₂O₃",need:{Ga:2,O:3},fact:"Para electrónica"},
-  {name:"Dióxido de germanio",formula:"GeO₂",need:{Ge:1,O:2},fact:"Para lentes y fibra óptica"},
-  {name:"Seleniuro de hidrógeno",formula:"H₂Se",need:{H:2,Se:1},fact:"Huele peor que el azufre 🤢"},
-  {name:"Bromuro de sodio",formula:"NaBr",need:{Na:1,Br:1},fact:"Sal de bromo"},
-  {name:"Ácido bromhídrico",formula:"HBr",need:{H:1,Br:1},fact:"Otro ácido fuerte"},
+  {name:"Agua",formula:"H₂O",need:{H:2,O:1},fact:"La bebes a diario; sin ella no vives 💧"},
+  {name:"Sal de mesa",formula:"NaCl",need:{Na:1,Cl:1},fact:"La sal que le pones a la comida 🧂"},
+  {name:"Gas hidrógeno",formula:"H₂",need:{H:2},fact:"El gas más ligero; flota y arde fácil 🎈"},
+  {name:"Gas oxígeno",formula:"O₂",need:{O:2},fact:"El que respiras para poder vivir 🫁"},
+  {name:"Óxido de magnesio",formula:"MgO",need:{Mg:1,O:1},fact:"Polvo blanco; calma el dolor de estómago"},
+  {name:"Cal",formula:"CaO",need:{Ca:1,O:1},fact:"La cal para construir y pintar casas 🏠"},
+  {name:"Fluoruro de sodio",formula:"NaF",need:{Na:1,F:1},fact:"Cuida tus dientes desde la pasta dental 🦷"},
+  {name:"Cloruro de potasio",formula:"KCl",need:{K:1,Cl:1},fact:"Una sal sin sodio, mejor para el corazón"},
+  {name:"Ácido clorhídrico",formula:"HCl",need:{H:1,Cl:1},fact:"El ácido fuerte que vive en tu estómago 🔥"},
+  {name:"Dióxido de carbono",formula:"CO₂",need:{C:1,O:2},fact:"El gas que exhalas; las plantas lo aman 🌳"},
+  {name:"Metano",formula:"CH₄",need:{C:1,H:4},fact:"El gas que sueltan las vacas... ¡y arde! 🐄"},
+  {name:"Amoníaco",formula:"NH₃",need:{N:1,H:3},fact:"Limpia muy bien y huele bien fuerte 🧽"},
+  {name:"Cloruro de calcio",formula:"CaCl₂",need:{Ca:1,Cl:2},fact:"Derrite el hielo de las calles en invierno ❄️"},
+  {name:"Óxido de zinc",formula:"ZnO",need:{Zn:1,O:1},fact:"El polvo blanco del bloqueador solar ☀️"},
+  {name:"Sulfuro de hidrógeno",formula:"H₂S",need:{H:2,S:1},fact:"Apesta a huevo podrido y es tóxico 🥚"},
+  {name:"Ácido fluorhídrico",formula:"HF",need:{H:1,F:1},fact:"Ácido tan fuerte que disuelve el vidrio 😱"},
+  {name:"Dióxido de silicio",formula:"SiO₂",need:{Si:1,O:2},fact:"Es la arena de la playa y el vidrio 🏖️"},
+  {name:"Óxido de hierro",formula:"Fe₂O₃",need:{Fe:2,O:3},fact:"La herrumbre naranja del hierro viejo 🟠"},
+  {name:"Óxido de aluminio",formula:"Al₂O₃",need:{Al:2,O:3},fact:"Capa dura que protege al aluminio 🛡️"},
+  {name:"Cloruro de aluminio",formula:"AlCl₃",need:{Al:1,Cl:3},fact:"Polvo blanco usado en las fábricas 🏭"},
+  {name:"Tetracloruro de carbono",formula:"CCl₄",need:{C:1,Cl:4},fact:"Un carbono abrazado por cuatro cloros"},
+  {name:"Dióxido de titanio",formula:"TiO₂",need:{Ti:1,O:2},fact:"El polvo blanco de pinturas y bloqueador 🎨"},
+  {name:"Trifluoruro de boro",formula:"BF₃",need:{B:1,F:3},fact:"Gas incoloro muy reactivo en química"},
+  {name:"Arsina",formula:"AsH₃",need:{As:1,H:3},fact:"Gas súper venenoso; ¡mucho cuidado! ☠️"},
+  {name:"Nitruro de aluminio",formula:"AlN",need:{Al:1,N:1},fact:"Material durísimo que aguanta el calor 🔥"},
+  {name:"Nitruro de magnesio",formula:"Mg₃N₂",need:{Mg:3,N:2},fact:"¡El compuesto más difícil de armar! 🏆"},
+  {name:"Cloruro de litio",formula:"LiCl",need:{Li:1,Cl:1},fact:"Sal de litio que absorbe la humedad"},
+  {name:"Óxido de litio",formula:"Li₂O",need:{Li:2,O:1},fact:"Polvo blanco que se usa en vidrios"},
+  {name:"Óxido de berilio",formula:"BeO",need:{Be:1,O:1},fact:"Muy duro y no deja pasar la electricidad"},
+  {name:"Fosfina",formula:"PH₃",need:{P:1,H:3},fact:"Gas que huele a ajo podrido 🧄"},
+  {name:"Óxido de escandio",formula:"Sc₂O₃",need:{Sc:2,O:3},fact:"Óxido de un metal raro y carísimo"},
+  {name:"Óxido de vanadio",formula:"V₂O₅",need:{V:2,O:5},fact:"Polvo naranja que acelera reacciones"},
+  {name:"Óxido de cromo",formula:"Cr₂O₃",need:{Cr:2,O:3},fact:"Verde brillante; se usa en pinturas 🟢"},
+  {name:"Óxido de manganeso",formula:"MnO",need:{Mn:1,O:1},fact:"Polvo verde-gris para hacer acero duro"},
+  {name:"Óxido de cobalto",formula:"CoO",need:{Co:1,O:1},fact:"Pinta de azul cobalto los vidrios 🔵"},
+  {name:"Óxido de níquel",formula:"NiO",need:{Ni:1,O:1},fact:"Verde; sirve para hacer baterías 🔋"},
+  {name:"Óxido de cobre",formula:"CuO",need:{Cu:1,O:1},fact:"El polvo negro del cobre oxidado"},
+  {name:"Óxido de galio",formula:"Ga₂O₃",need:{Ga:2,O:3},fact:"Se usa en pantallas y electrónica 💡"},
+  {name:"Dióxido de germanio",formula:"GeO₂",need:{Ge:1,O:2},fact:"Va en lentes y en fibra óptica 🔬"},
+  {name:"Seleniuro de hidrógeno",formula:"H₂Se",need:{H:2,Se:1},fact:"Apesta todavía más que el azufre 🤢"},
+  {name:"Bromuro de sodio",formula:"NaBr",need:{Na:1,Br:1},fact:"Una sal de bromo, prima de la común"},
+  {name:"Ácido bromhídrico",formula:"HBr",need:{H:1,Br:1},fact:"Ácido fuerte, primo del clorhídrico"},
 ];
 const BY_FORMULA=Object.fromEntries(COMPOUNDS.map(c=>[c.formula,c]));
 
@@ -506,12 +526,19 @@ function updateFound(){document.getElementById("fcount").textContent=found.size;
 
 /* =================== BATALLA =================== */
 let pLife,cpuLife,hand,cHand,pMonsters,cpuMonsters,pShields,cpuShields,bSel,bPlayed,bTurn,bOver,pSkip,cpuSkip,pDodge,cpuDodge,bPendingInfo,bPendingIdxs;
+let difficulty='normal', cpuMax=30; const pMax=30;
+/* dificultad: vida de la compu y cuánto juega al azar (más azar = más fácil) */
+const DIFF={ easy:{cpuLife:22, rand:.5}, normal:{cpuLife:30, rand:.15}, hard:{cpuLife:40, rand:0} };
+function setDifficulty(d){ difficulty=d; startBattle(); }
+function updateDiffButtons(){ document.querySelectorAll('#diffSel button').forEach(b=>b.classList.toggle('on', b.dataset.d===difficulty)); }
 function cn(c){return c==='p'?'Tú':'La compu';}
 function cn2(f){return f==='p'?'ti':'la compu';}
 
 function startBattle(){
   bLogLines=[];
-  pLife=30; cpuLife=30; hand=drawN(5); cHand=drawN(5);
+  cpuMax=DIFF[difficulty].cpuLife;
+  pLife=pMax; cpuLife=cpuMax; hand=drawN(5); cHand=drawN(5);
+  updateDiffButtons();
   pMonsters=[]; cpuMonsters=[]; pShields=[]; cpuShields=[];
   bSel=null; bPlayed=false; bOver=false; pSkip=false; cpuSkip=false; pDodge=false; cpuDodge=false;
   bLog("¡Empieza la batalla! Forma tu primera carta.");
@@ -524,17 +551,36 @@ function bHint(m){document.getElementById("bHint").textContent=m;}
 
 function bStartPlayerTurn(){
   bTurn='p'; pMonsters.forEach(m=>m.canAttack=true); bDraw('p',2); bPlayed=false; bSel=null;
-  bHint("Tu turno: toca una carta y un amigo verde para formar tu carta. ⭐ = gas noble (úsalo solo).");
+  const helped=ensurePlayable('p');
+  bHint(helped
+    ? "✨ Te dimos una carta reactiva para que siempre puedas jugar. ¡Forma tu carta!"
+    : "Tu turno: toca una carta y un amigo verde para formar tu carta. ⭐ = gas noble (úsalo solo).");
   renderBattle();
 }
 function bDraw(who,n){const h=who==='p'?hand:cHand; for(let k=0;k<n;k++){ if(h.length>=7)h.shift(); h.push(draw()); } if(who==='p')SFX.draw();}
+
+/* ¿la mano tiene alguna jugada posible? (un gas noble, o un par que combine) */
+function hasPlay(h){ if(h.some(s=>NOBLE[s]))return true; for(let i=0;i<h.length;i++)for(let j=i+1;j<h.length;j++)if(findCompound(h[i],h[j]))return true; return false; }
+/* si la mano del jugador quedó sin jugadas, le metemos una carta reactiva
+   (de preferencia para formar un monstruo: metal + O). Devuelve true si ayudó. */
+function ensurePlayable(who){
+  const h=who==='p'?hand:cHand;
+  if(hasPlay(h))return false;
+  // 1) ¿hay un metal que con O haga un monstruo? entonces dale un O
+  const metal=h.find(s=>{const cp=findCompound(s,'O'); return cp&&CARD[cp.formula]&&CARD[cp.formula].type==='monster';});
+  if(metal){ const ri=h.findIndex(s=>s!==metal); if(ri>=0)h[ri]='O'; return true; }
+  // 2) genérico: a cualquier elemento dale su primer amigo
+  const e=h.find(s=>!NOBLE[s]);
+  if(e){ const p=[...PARTNERS[e]][0]; const ei=h.indexOf(e); const ri=h.findIndex((s,i)=>i!==ei); if(ri>=0){h[ri]=p; return true;} }
+  return false;
+}
 
 function applyDamage(foe,dmg,ignore){
   if((foe==='p'&&pDodge)||(foe==='c'&&cpuDodge)){ if(foe==='p')pDodge=false; else cpuDodge=false; checkWin(); return `${cn2(foe).replace('ti','Tú').replace('la compu','La compu')} esquivó el daño 🎈`; }
   const shields=foe==='p'?pShields:cpuShields; let dleft=dmg;
   if(!ignore){ while(dleft>0&&shields.length){const s=shields[0]; if(s.block>dleft){s.block-=dleft; dleft=0; if(s.oneUse)shields.shift();} else {dleft-=s.block; shields.shift();}} }
   if(foe==='p')pLife=Math.max(0,pLife-dleft); else cpuLife=Math.max(0,cpuLife-dleft);
-  if(dleft>0){ flashDamage(foe); SFX.damage(); }
+  if(dleft>0){ flashDamage(foe); floatDmg(foe,dleft); SFX.damage(); }
   checkWin();
   return `${dmg} de daño${ignore?' (ignora escudo)':''}${dleft<dmg?` (escudo absorbió ${dmg-dleft})`:''}.`;
 }
@@ -544,11 +590,11 @@ function resolve(info,caster){
   if(info.type==='monster'){
     const arr=me==='p'?pMonsters:cpuMonsters;
     if(arr.length>=3){ bLog(`${cn(caster)}: zona de monstruos llena (máx 3).`); return false; }
-    arr.push({formula:info.formula,atk:info.atk,canAttack:false});
+    arr.push({formula:info.formula,atk:info.atk,canAttack:false,el:repEl(info.formula)});
     bLog(`${cn(caster)} invoca ${info.name} 🐉${info.atk}.`);
   } else if(info.type==='shield'){
     const arr=me==='p'?pShields:cpuShields;
-    arr.push({label:info.formula||info.name,block:info.block,oneUse:!!info.oneUse});
+    arr.push({label:info.formula||info.name,block:info.block,oneUse:!!info.oneUse,el:info.formula?repEl(info.formula):info.sym});
     if(info.heal)healMe(info.heal);
     bLog(`${cn(caster)} pone escudo ${info.name||info.formula} 🛡${info.block>=999?'∞':info.block}${info.heal?` (+cura ${info.heal})`:''}.`);
   } else {
@@ -567,7 +613,7 @@ function bAttack(caster){
   if((caster==='p'&&pSkip)||(caster==='c'&&cpuSkip)){ if(caster==='p')pSkip=false; else cpuSkip=false; bLog(`${cn(caster)}: monstruos atontados, no atacan 💤.`); return; }
   const mons=caster==='p'?pMonsters:cpuMonsters; const foe=caster==='p'?'c':'p'; let total=0;
   mons.forEach(m=>{ if(m.canAttack){ applyDamage(foe,m.atk,false); total+=m.atk; } });
-  if(total>0){ SFX.attack(); bLog(`${cn(caster)} ataca con sus monstruos (${total} de daño total).`); }
+  if(total>0){ lunge(caster); SFX.attack(); bLog(`${cn(caster)} ataca con sus monstruos (${total} de daño total).`); }
 }
 function checkWin(){ if(bOver)return; if(cpuLife<=0){bEnd(true);} else if(pLife<=0){bEnd(false);} }
 
@@ -578,6 +624,7 @@ function bCpuTurn(){
   setTimeout(()=>{ if(bOver)return;
     cpuMonsters.forEach(m=>m.canAttack=true); bDraw('c',2);
     const opts=bOptions(cHand); let best=null,bv=-99; opts.forEach(o=>{const v=aiValue(o); if(v>bv){bv=v;best=o;}});
+    if(opts.length && Math.random()<DIFF[difficulty].rand){ best=opts[Math.floor(Math.random()*opts.length)]; bv=aiValue(best); }
     if(best&&bv>0){ const cinfo=best.cp?cardOf(best.cp.formula):nobleOf(cHand[best.i]); resolve(cinfo,'c'); if(best.cp){ const hi=Math.max(best.i,best.j),lo=Math.min(best.i,best.j); cHand.splice(hi,1); cHand.splice(lo,1);} else { cHand.splice(best.i,1);} playCardSfx(cinfo); }
     else { cHand[0]=draw(); bLog("La compu cambia una carta."); }
     renderBattle();
@@ -664,13 +711,30 @@ function cancelConfirm(){
 }
 
 /* render batalla */
-function fieldCardM(m){return `<div class="fcard monster"><div class="cf">${sub(m.formula)}</div><div class="catk">🐉 ${m.atk}</div>${m.canAttack===false?'<div class="sick">💤</div>':''}</div>`;}
-function fieldCardS(s){return `<div class="fcard shield"><div class="cf">${sub(s.label)}</div><div class="catk">🛡 ${s.block>=999?'∞':s.block}</div></div>`;}
+/* elemento representativo de un compuesto (para mostrar su monstruo): prefiere el metal */
+function repEl(formula){
+  const keys=Object.keys(BY_FORMULA[formula].need);
+  const metal=keys.find(k=>['transition','alkali','alkaline','post','metalloid'].includes(BY_SYM[k].cat));
+  if(metal)return metal;
+  return keys.find(k=>k!=='O')||keys[0];
+}
+function fieldCardM(m){
+  const el=BY_SYM[m.el||repEl(m.formula)];
+  return `<div class="fcard monster" style="--cellbg:var(${CAT_COLOR[el.cat]})"><div class="fmon">${monster(el)}</div><div class="fcf">${sub(m.formula)}</div><div class="fbadge atk">🐉${m.atk}</div>${m.canAttack===false?'<div class="sick">💤</div>':''}</div>`;
+}
+function fieldCardS(s){
+  const sym=s.el||(BY_FORMULA[s.label]?repEl(s.label):'Ar'); const el=BY_SYM[sym];
+  const lbl=BY_FORMULA[s.label]?sub(s.label):s.label;
+  return `<div class="fcard shield" style="--cellbg:var(${CAT_COLOR[el.cat]})"><div class="fmon">${monster(el)}</div><div class="fcf">${lbl}</div><div class="fbadge shield">🛡${s.block>=999?'∞':s.block}</div></div>`;
+}
 function zEmpty(t){return `<span class="zempty">(sin ${t})</span>`;}
+function floatDmg(foe,n){ const el=document.getElementById(foe==='p'?'sideMe':'sideCpu'); if(!el)return; const s=document.createElement('div'); s.className='floatdmg'; s.textContent='-'+n; el.appendChild(s); setTimeout(()=>s.remove(),900); }
+function lunge(caster){ const el=document.getElementById(caster==='p'?'myMonsters':'cpuMonsters'); if(!el)return; const cls=caster==='p'?'lungeUp':'lungeDown'; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(()=>el.classList.remove(cls),330); }
 function renderBattle(){
-  document.getElementById("cpuLife").textContent=cpuLife; document.getElementById("myLife").textContent=pLife;
-  document.getElementById("cpuLifeBar").style.width=(Math.max(0,cpuLife)/30*100)+"%";
-  document.getElementById("myLifeBar").style.width=(Math.max(0,pLife)/30*100)+"%";
+  document.getElementById("cpuLife").textContent=Math.max(0,cpuLife); document.getElementById("myLife").textContent=Math.max(0,pLife);
+  document.getElementById("cpuMaxL").textContent=cpuMax; document.getElementById("myMaxL").textContent=pMax;
+  document.getElementById("cpuLifeBar").style.width=(Math.max(0,cpuLife)/cpuMax*100)+"%";
+  document.getElementById("myLifeBar").style.width=(Math.max(0,pLife)/pMax*100)+"%";
   document.getElementById("cpuMonsters").innerHTML=cpuMonsters.length?cpuMonsters.map(fieldCardM).join(""):zEmpty("monstruos");
   document.getElementById("myMonsters").innerHTML=pMonsters.length?pMonsters.map(fieldCardM).join(""):zEmpty("monstruos");
   document.getElementById("cpuShields").innerHTML=cpuShields.length?cpuShields.map(fieldCardS).join(""):zEmpty("escudos");
